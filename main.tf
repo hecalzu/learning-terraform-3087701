@@ -107,7 +107,7 @@ module "blog_autoscaling" {
   image_id      = data.aws_ami.app_ami.id
 
   # Bootstrap Apache so ALB target health checks pass and traffic can be served
-  user_data = <<-EOT
+  user_data = base64encode(<<-EOT
 #!/bin/bash
 set -xe
 yum update -y
@@ -116,7 +116,8 @@ systemctl enable httpd
 systemctl start httpd
 echo "<h1>Blog app is running on $(hostname -f)</h1>" > /var/www/html/index.html
 curl -I http://127.0.0.1/ || true
-  EOT
+EOT
+  )
 
   traffic_source_attachments = {
     blob-alb = {
@@ -124,8 +125,3 @@ curl -I http://127.0.0.1/ || true
     }
   }
 }
-
-
-
-
-
