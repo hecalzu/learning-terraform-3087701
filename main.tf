@@ -96,7 +96,8 @@ module "blog_autoscaling" {
   min_size = 1
   max_size = 2
 
-  vpc_zone_identifier = module.blog_vpc.public_subnets
+  # Place app instances in private subnets (egress through NAT) behind public ALB
+  vpc_zone_identifier = module.blog_vpc.private_subnets
 
   launch_template_name = "blog"
 
@@ -106,7 +107,7 @@ module "blog_autoscaling" {
   image_id      = data.aws_ami.app_ami.id
 
   # Bootstrap Apache so ALB target health checks pass and traffic can be served
-  user_data = base64encode(<<-EOT
+  user_data = <<-EOT
     #!/bin/bash
     set -xe
     yum update -y
@@ -115,7 +116,6 @@ module "blog_autoscaling" {
     systemctl start httpd
     echo "<h1>Blog app is running on $(hostname -f)</h1>" > /var/www/html/index.html
   EOT
-  )
 
   traffic_source_attachments = {
     blob-alb = {
@@ -123,6 +123,7 @@ module "blog_autoscaling" {
     }
   }
 }
+
 
 
 
