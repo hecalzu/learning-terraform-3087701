@@ -95,6 +95,9 @@ module "blog_autoscaling" {
 
   min_size = 1
   max_size = 2
+  desired_capacity = 1
+  health_check_type         = "ELB"
+  health_check_grace_period = 600
 
   # Place app instances in private subnets (egress through NAT) behind public ALB
   vpc_zone_identifier = module.blog_vpc.private_subnets
@@ -110,11 +113,13 @@ module "blog_autoscaling" {
   user_data = base64encode(<<-EOT
 #!/bin/bash
 set -xe
-yum update -y
-yum install -y httpd
-systemctl enable httpd
-systemctl start httpd
+mkdir -p /var/www/html
 echo "<h1>Blog app is running on $(hostname -f)</h1>" > /var/www/html/index.html
+
+# Avoid package-install/network dependency during bootstrap:
+# start a simple local HTTP server on port 80
+nohup python3 -m http.server 80 --directory /var/www/html >/var/log/simple-http.log 2>&1 &
+sleep 2
 curl -I http://127.0.0.1/ || true
 EOT
   )
