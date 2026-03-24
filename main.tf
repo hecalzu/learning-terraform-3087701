@@ -75,6 +75,16 @@ resource "aws_lb_target_group" "blog" {
   port     = 80
   protocol = "HTTP"
   vpc_id   = module.blog_vpc.vpc_id
+
+  health_check {
+    path                = "/"
+    protocol            = "HTTP"
+    matcher             = "200-399"
+    healthy_threshold   = 2
+    unhealthy_threshold = 3
+    timeout             = 5
+    interval            = 30
+  }
 }
 
 module "blog_autoscaling" {
@@ -95,9 +105,24 @@ module "blog_autoscaling" {
   instance_type = var.instance_type
   image_id      = data.aws_ami.app_ami.id
 
+  # Bootstrap Apache so ALB target health checks pass and traffic can be served
+  user_data = base64encode(<<-EOT
+    #!/bin/bash
+    set -xe
+    yum update -y
+    yum install -y httpd
+    systemctl enable httpd
+    systemctl start httpd
+    echo "<h1>Blog app is running on $(hostname -f)</h1>" > /var/www/html/index.html
+  EOT
+  )
+
   traffic_source_attachments = {
     blob-alb = {
       traffic_source_identifier = aws_lb_target_group.blog.arn
     }
   }
 }
+
+
+
