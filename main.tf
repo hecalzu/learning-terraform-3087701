@@ -27,7 +27,7 @@ resource "aws_instance" "blog" {
   }
 }
 
-module "vpc" "blog_vpc"{
+module "blog_vpc"{
   source = "terraform-aws-modules/vpc/aws"
 
   name = "dev"
