@@ -62,7 +62,7 @@ resource "aws_security_group" "blog_http_in" {
 
 }
 
-resource "aws_security_group" "blog_http2_in" { 
+resource "aws_security_group" "blog_https_in" { 
   type      = "ingress"
   from_port = 443
   to_port   = 443
