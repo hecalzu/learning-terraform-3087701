@@ -14,19 +14,6 @@ data "aws_ami" "app_ami" {
   owners = ["979382823631"] # Bitnami
 }
 
-resource "aws_instance" "blog" {
-  ami           = data.aws_ami.app_ami.id
-  instance_type = var.instance_type
-
-  vpc_security_group_ids = [module.blog_sg.security_group_id]
-
-  subnet_id = module.blog_vpc.public_subnets[0]
-
-  tags = {
-    Name = "HelloWorld"
-  }
-}
-
 module "blog_vpc"{
   source = "terraform-aws-modules/vpc/aws"
 
@@ -95,3 +82,29 @@ resource "aws_lb_target_group_attachment" "blog" {
   target_id        = aws_instance.blog.id
   port             = 80
 }
+
+module "blog_autoscaling" {
+  source  = "terraform-aws-modules/autoscaling/aws"
+  version = "9.2.0"
+            
+  name = "blog"
+
+  min_size = 1
+  max_size = 2
+
+  vpc_zone_identifier = module.blog_vpc.public_subnets
+
+  launch_template_name = "blog"
+
+  security_groups = [module.blog_sg.security_group_id]
+
+  instance_type = var.instance_type
+  image_id      = data.aws_ami.app_ami.id
+
+  traffic_source_attachments = {
+    blob-alb = {
+      traffic_source_identifier = aws_lb_target_group.blog.arn
+    }
+  }
+}
+
