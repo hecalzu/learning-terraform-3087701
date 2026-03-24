@@ -108,13 +108,14 @@ module "blog_autoscaling" {
 
   # Bootstrap Apache so ALB target health checks pass and traffic can be served
   user_data = <<-EOT
-    #!/bin/bash
-    set -xe
-    yum update -y
-    yum install -y httpd
-    systemctl enable httpd
-    systemctl start httpd
-    echo "<h1>Blog app is running on $(hostname -f)</h1>" > /var/www/html/index.html
+#!/bin/bash
+set -xe
+yum update -y
+yum install -y httpd
+systemctl enable httpd
+systemctl start httpd
+echo "<h1>Blog app is running on $(hostname -f)</h1>" > /var/www/html/index.html
+curl -I http://127.0.0.1/ || true
   EOT
 
   traffic_source_attachments = {
@@ -123,6 +124,7 @@ module "blog_autoscaling" {
     }
   }
 }
+
 
 
 
