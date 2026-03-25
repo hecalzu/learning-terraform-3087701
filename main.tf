@@ -79,6 +79,7 @@ module "blog_alb" {
   }
 }
 
+
 module "blog_sg" {
   source  = "terraform-aws-modules/security-group/aws"
   version = "4.13.0"
@@ -89,5 +90,5 @@ module "blog_sg" {
   ingress_cidr_blocks = ["0.0.0.0/0"]
   egress_rules = ["all-all"]
   egress_cidr_blocks = ["0.0.0.0/0"]
-  
+
 }
